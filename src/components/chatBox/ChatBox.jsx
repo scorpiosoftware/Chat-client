@@ -1,9 +1,11 @@
 import "./chat.css";
 import NavigationBar from "./navigation";
+import { useAuth } from "../../plugins/AuthContext";
 import { useNavigate } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 export default function ChatBox() {
   const [rooms, setRooms] = useState([]);
+  const {logout} = useAuth();
   const [selectedRoom, setSelectedRoom] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -14,7 +16,6 @@ export default function ChatBox() {
     navigate('/login');
     return;
   }
-
   useEffect(() => {
     const fetchRooms = async () => {
       try {
@@ -90,6 +91,11 @@ export default function ChatBox() {
             ) : (
               <p>Loading</p>
             )}
+            <li>
+              <button onClick={()=>logout()} className="border-2 px-3 py-2 rounded-full bg-red-400 text-white ">
+              Logout
+            </button>
+            </li>
           </ul>
         </div>
       </aside>

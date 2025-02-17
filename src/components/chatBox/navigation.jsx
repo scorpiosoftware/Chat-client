@@ -6,13 +6,6 @@ const NavigationBar = ({ room }) => {
   const [chatHistory, SetChatHistory] = useState([]);
   const [userId, setUserId] = useState(null);
   const { getUserIdFromToken, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -51,12 +44,6 @@ const NavigationBar = ({ room }) => {
           <h1 className="text-xl font-bold shadow-xl p-2 rounded-full">
             {room.name}
           </h1>
-          <button
-            onClick={handleLogout}
-            className="border-2 px-3 py-2 rounded-full bg-red-400 text-white "
-          >
-            Logout
-          </button>
         </div>
       </nav>
       <div className="relative h-96 mt-4 overflow-y-scroll">
