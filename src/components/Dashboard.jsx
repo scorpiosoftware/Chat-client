@@ -16,14 +16,13 @@ const Dashboard = () => {
     if (!isAuthenticated) {
       navigate("/login");
     }
-
     if (isAuthenticated && userRole != "admin") {
       navigate("/chatBox");
     }
   }, [isAuthenticated, navigate]);
 
   function logoutHandler() {
-    logout();
+    logout('/login');
   }
 
   // Save section to localStorage whenever it changes

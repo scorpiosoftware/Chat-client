@@ -2,20 +2,22 @@ import "./chat.css";
 import NavigationBar from "./navigation";
 import { useAuth } from "../../plugins/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { io } from "socket.io-client";
 import React, { useState, useEffect } from "react";
+
 export default function ChatBox() {
   const [rooms, setRooms] = useState([]);
   const {logout} = useAuth();
   const [selectedRoom, setSelectedRoom] = useState([]);
+  const [socket, setSocket] = useState(io);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
   if (!token) {
-    setError("No authentication token found");
     navigate('/login');
-    return;
   }
+  
   useEffect(() => {
     const fetchRooms = async () => {
       try {
@@ -45,6 +47,13 @@ export default function ChatBox() {
     };
     fetchRooms();
   }, []);
+
+  function handleRoomSelection(room){
+    setSelectedRoom(room);
+    const socket = io('http://localhost:3010');
+    setSocket(socket);
+  }
+
   return (
     <div>
       <button
@@ -79,7 +88,7 @@ export default function ChatBox() {
             {rooms?.length > 0 ? (
               rooms.map((room) => (
                 <li
-                  onClick={() => setSelectedRoom(room)}
+                  onClick={() => handleRoomSelection(room)}
                   key={room.id}
                   className="border rounded-md font-bold cursor-pointer"
                 >
@@ -103,7 +112,7 @@ export default function ChatBox() {
       {/* chat Box */}
       <div className="p-4 sm:ml-64">
         <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg d:border-gray-700">
-          <NavigationBar room={selectedRoom} />
+          <NavigationBar room={selectedRoom} socket={socket} />
         </div>
       </div>
     </div>

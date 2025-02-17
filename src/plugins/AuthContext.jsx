@@ -17,11 +17,11 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(true);
   };
 
-  const logout = () => {
+  const logout = (path) => {
+    const navigate = useNavigate();
     localStorage.removeItem("token");
     setIsAuthenticated(false);
-    const navigate = useNavigate();
-    navigate("/login");
+    navigate(path);
   };
   const getUserIdFromToken = () => {
     const token = localStorage.getItem("token");
@@ -45,8 +45,7 @@ export const AuthProvider = ({ children }) => {
 
       // Decode and parse
       const decodedPayload = JSON.parse(atob(base64));
-
-      return decodedPayload.userId || null;
+      return  parseInt(decodedPayload.userId, 10) || null;
     } catch (error) {
       console.error("Error decoding token:", error);
       return null;

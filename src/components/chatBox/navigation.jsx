@@ -2,10 +2,35 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../plugins/AuthContext";
 
-const NavigationBar = ({ room }) => {
+const NavigationBar = ({ room, socket }) => {
   const [chatHistory, SetChatHistory] = useState([]);
   const [userId, setUserId] = useState(null);
-  const { getUserIdFromToken, logout } = useAuth();
+  const { getUserIdFromToken , logout } = useAuth();
+  const [message, setMessage] = useState("");
+  const [chat, setChat] = useState([]);
+  useEffect(() => {
+    // Listen for incoming messages
+    socket.on("message", (msg) => {
+      setChat((prevChat) => [...prevChat, msg]);
+    });
+
+    // Clean up the listener on unmount
+    return () => {
+      socket.off("message");
+    };
+  }, []);
+  const sendMessage = () => {
+    const msgData = {
+      content: message,
+      user_id: userId,   // Replace with actual user ID
+      room_id: room.id,   // Replace with actual room ID
+    };
+    // Emit the message to the server
+    if (!message)
+      return;
+    socket.emit("message", msgData);
+    setMessage("");
+  };
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -50,11 +75,10 @@ const NavigationBar = ({ room }) => {
         <div className="grid">
           {chatHistory.map((message) => (
             <div
-              className={`border inline-block max-w-max rounded-full p-2  ${
-                message.user_id === userId
-                  ? "ml-auto bg-white"
-                  : "mr-auto bg-yellow-300"
-              }`}
+              className={`border inline-block max-w-max rounded-full p-2  ${message.user_id === userId
+                ? "ml-auto bg-white"
+                : "mr-auto bg-yellow-300"
+                }`}
               key={message.id}
             >
               {message.content}
@@ -64,10 +88,11 @@ const NavigationBar = ({ room }) => {
       </div>
       <div className="relative bottom-0 w-full flex gap-x-2">
         <input
-          type="text"
+          type="text" value={message}
+          onChange={(e) => setMessage(e.target.value)}
           className="relative rounded-full px-6 bottom-0 w-full shadow-xl border-2 "
         />
-        <button className="border border-yellow-500 border-2 bg-green-400 text-white font-bold cursor-pointer hover:scale-95 px-3 rounded-full">
+        <button onClick={() => sendMessage()} className="border border-yellow-500 border-2 bg-green-400 text-white font-bold cursor-pointer hover:scale-95 px-3 rounded-full">
           send
         </button>
       </div>
