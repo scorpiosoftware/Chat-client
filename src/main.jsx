@@ -25,7 +25,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           element={
             <ProtectedRoute
               conditionA={!isAuthenticated}
-              redirectTo="/dashboard"
+              redirectTo="/chatbox"
             >
               <ChatBox />
             </ProtectedRoute>
