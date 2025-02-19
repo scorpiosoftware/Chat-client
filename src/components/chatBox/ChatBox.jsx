@@ -7,17 +7,23 @@ import React, { useState, useEffect } from "react";
 
 export default function ChatBox() {
   const [rooms, setRooms] = useState([]);
-  const { logout } = useAuth();
+  const { logout, getRoleFromToken } = useAuth();
   const [selectedRoom, setSelectedRoom] = useState([]);
   const [socket, setSocket] = useState(io);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const token = localStorage.getItem("token");
+  const [role, setRole] = useState(null);
+  const token = sessionStorage.getItem("token");
   const navigate = useNavigate();
-  if (!token) {
-    navigate('/login');
-  }
-
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+    }
+  }, [token, navigate]);
+  useEffect(() => {
+    const currentRole = getRoleFromToken();
+    setRole(currentRole);
+  }, []);
   useEffect(() => {
     const fetchRooms = async () => {
       try {
@@ -50,7 +56,7 @@ export default function ChatBox() {
 
   function handleRoomSelection(room) {
     setSelectedRoom(room);
-    const socket = io('http://localhost:3010');
+    const socket = io("http://localhost:3010");
     setSocket(socket);
   }
 
@@ -96,10 +102,11 @@ export default function ChatBox() {
                 <li
                   onClick={() => handleRoomSelection(room)}
                   key={room.id}
-                  className={`border rounded-md cursor-pointer transition duration-300 ${selectedRoom?.id === room.id
+                  className={`border rounded-md cursor-pointer transition duration-300 ${
+                    selectedRoom?.id === room.id
                       ? "bg-blue-500 text-white"
                       : "bg-white text-gray-900 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-                    }`}
+                  }`}
                 >
                   <div className="flex items-center p-3 rounded-lg group">
                     <span className="ms-3">{room.name}</span>
@@ -111,11 +118,24 @@ export default function ChatBox() {
                 Loading...
               </p>
             )}
-
+            {role === "admin" && (
+              <li>
+                <button
+                  onClick={() => navigate("/dashboard")}
+                  className="w-full border-2 px-4 py-2 rounded-full bg-green-500 text-white hover:bg-green-600 transition duration-300 mb-4"
+                >
+                  Admin Dashboard
+                </button>
+              </li>
+            )}
             {/* Logout Button */}
             <li className="mt-4">
               <button
-                onClick={() => logout()}
+                onClick={() => {
+                  logout(); // Clear auth state (via useAuth)
+                  sessionStorage.removeItem("token"); // Explicitly remove token
+                  navigate("/login"); // Redirect to login
+                }}
                 className="w-full border-2 px-4 py-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition duration-300"
               >
                 Logout
@@ -132,6 +152,5 @@ export default function ChatBox() {
         </div>
       </div>
     </div>
-
   );
 }

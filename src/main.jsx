@@ -4,13 +4,13 @@ import App from "./App";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import Register from "./components/register";
 import Login from "./components/Login";
-import { AuthProvider,useAuth } from './plugins/AuthContext';
+import { AuthProvider, useAuth } from "./plugins/AuthContext";
 import Dashboard from "./components/Dashboard";
 import ChatBox from "./components/chatBox/ChatBox";
-import ProtectedRoute from "./plugins/ProtectedRoutes";
+import VerifyAuth from "./plugins/VerifyAuth";
 // Define your conditions here.
 // For example, these could come from context or other state:
-const isAuthenticated = localStorage.getItem("token");
+const isAuthenticated = sessionStorage.getItem("token");
 ReactDOM.createRoot(document.getElementById("root")).render(
   <AuthProvider>
     <BrowserRouter>
@@ -18,21 +18,24 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/*" element={<Navigate to="/login" />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        {/* <Route path="/chatBox" element={<ChatBox />} /> */}
+        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
         <Route
-          path="/chatBox"
+          path="/dashboard"
           element={
-            <ProtectedRoute
-              conditionA={!isAuthenticated}
-              redirectTo="/chatbox"
-            >
+            <VerifyAuth>
+              <Dashboard />
+            </VerifyAuth>
+          }
+        />
+        <Route
+          path="/chatbox"
+          element={
+            <VerifyAuth>
               <ChatBox />
-            </ProtectedRoute>
+            </VerifyAuth>
           }
         />
       </Routes>
     </BrowserRouter>
-   </AuthProvider>
-
+  </AuthProvider>
 );

@@ -9,20 +9,28 @@ const Dashboard = () => {
     return savedSection || "dashboard";
   });
   const { isAuthenticated, logout, getRoleFromToken } = useAuth();
+  const [role, setRole] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  const userRole = getRoleFromToken;
+  useEffect(() => {
+    const currentRole = getRoleFromToken();
+    setRole(currentRole);
+    setIsLoading(false); 
+  }, []);
+
   // Redirect if already authenticated
   useEffect(() => {
+    if (isLoading) return;
     if (!isAuthenticated) {
       navigate("/login");
     }
-    if (isAuthenticated && userRole != "admin") {
+    if (role != "admin") {
       navigate("/chatBox");
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, role, navigate]);
 
   function logoutHandler() {
-    logout('/login');
+    logout("/login");
   }
 
   // Save section to localStorage whenever it changes
