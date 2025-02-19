@@ -7,7 +7,7 @@ import React, { useState, useEffect } from "react";
 
 export default function ChatBox() {
   const [rooms, setRooms] = useState([]);
-  const { logout, getRoleFromToken } = useAuth();
+  const { logout, getRoleFromToken,getUserIdFromToken } = useAuth();
   const [selectedRoom, setSelectedRoom] = useState([]);
   const [socket, setSocket] = useState(io);
   const [loading, setLoading] = useState(true);
@@ -15,6 +15,7 @@ export default function ChatBox() {
   const [role, setRole] = useState(null);
   const token = sessionStorage.getItem("token");
   const navigate = useNavigate();
+ 
   useEffect(() => {
     if (!token) {
       navigate("/login");
@@ -27,10 +28,11 @@ export default function ChatBox() {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const response = await fetch("http://localhost:3010/api/rooms", {
+        const userId = getUserIdFromToken();
+        const response = await fetch(`http://localhost:3010/api/rooms/user/${userId}`, {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${token}`,
+            // Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
@@ -44,7 +46,7 @@ export default function ChatBox() {
           setRooms(roomsArray);
           setLoading(false);
           setError(null);
-        }, 2000);
+        }, 205);
         // Wait 2 seconds even if data is ready
       } catch (err) {
         setError(err.message);

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./dashboard.css";
 import UsersView from "./dashboardContent/user/UsersView";
 import { useAuth } from "../plugins/AuthContext";
+import RoomView from "./dashboardContent/room/RoomView";
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState(() => {
     const savedSection = localStorage.getItem("activeSection");
@@ -15,7 +16,7 @@ const Dashboard = () => {
   useEffect(() => {
     const currentRole = getRoleFromToken();
     setRole(currentRole);
-    setIsLoading(false); 
+    setIsLoading(false);
   }, []);
 
   // Redirect if already authenticated
@@ -28,11 +29,6 @@ const Dashboard = () => {
       navigate("/chatBox");
     }
   }, [isAuthenticated, role, navigate]);
-
-  function logoutHandler() {
-    logout("/login");
-  }
-
   // Save section to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("activeSection", activeSection);
@@ -40,8 +36,7 @@ const Dashboard = () => {
   const sections = {
     dashboard: <DashboardContent />,
     users: <UsersView />,
-    orders: <OrdersContent />,
-    analytics: <AnalyticsContent />,
+    rooms: <RoomView />,
   };
 
   return (
@@ -62,7 +57,9 @@ const Dashboard = () => {
                 {sectionKey.charAt(0).toUpperCase() + sectionKey.slice(1)}
               </li>
             ))}
-            <li onClick={() => logoutHandler()}>Logout</li>
+            <li className="bg-green-400 font-bold" onClick={() => navigate("/chatbox")}>chatbox</li>
+            <li className="bg-red-400 font-bold" onClick={() => logout("/login")}>Logout</li>
+
           </ul>
         </nav>
       </div>
@@ -73,26 +70,9 @@ const Dashboard = () => {
   );
 };
 
-// Example content components
 const DashboardContent = () => (
   <div>
     <h1>Dashboard Overview</h1>
-    {/* Add dashboard content here */}
   </div>
 );
-
-const OrdersContent = () => (
-  <div>
-    <h1>Order Tracking</h1>
-    {/* Add orders content here */}
-  </div>
-);
-
-const AnalyticsContent = () => (
-  <div>
-    <h1>Analytics Reports</h1>
-    {/* Add analytics content here */}
-  </div>
-);
-
 export default Dashboard;

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
+import UserService from '../../../Services/UserService';
 export default function UsersView() {
   const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState({name: "",email: "",role: ""});
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
   const [error, setError] = useState(null);
@@ -10,31 +12,18 @@ export default function UsersView() {
     console.log(error);
     return;
   }
+
+  // Fetch Users Data from End Point APU
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch("http://localhost:3010/api/users", {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        if (!response.ok) {
-          if (response.status === 401) {
-            throw new Error("Authentication failed. Please login again.");
-          }
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const responseData = await response.json();
-        const usersArray = responseData.payload.data;
-
+        const userData = await UserService.getUsers();
+        const usersArray = userData.payload.data;
         setTimeout(() => {
           setUsers(usersArray);
           setLoading(false);
           setError(null);
-        }, 1000);
+        }, 350);
       } catch (err) {
         setError(err.message);
         setUsers([]);
@@ -44,28 +33,46 @@ export default function UsersView() {
     fetchUsers();
   }, []);
 
-  // Delete user handler
+  // Handle input change
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setSelectedUser((prevUser) => ({
+      ...prevUser,
+      [name]: value,
+    }));
+  };
+
+  const UpdateUserHandler = async (userId) => {
+    if (!window.confirm("Are you sure you want to modify this user?")) return;
+    try {
+
+      const formData = {
+        name: selectedUser.name,
+        email: selectedUser.email,
+        role: selectedUser.role,
+      }
+      await UserService.updateUser(userId, formData);
+      // Update UI by filtering out deleted user
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.id === userId ? { ...user, ...formData } : user
+        )
+      );
+      setError(null);
+    } catch (err) {
+      setError(`Update Failed: ${err.message}`);
+    } finally {
+      // setDeletingId(null);
+    }
+  }
+
+
+  // Delete User Button Event
   const handleDeleteUser = async (userId) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
-
     try {
       setDeletingId(userId);
-      const token = sessionStorage.getItem("token");
-
-      const response = await fetch(
-        `http://localhost:3010/api/users/delete/${userId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
+      await UserService.deleteUserById(deletingId);
       // Update UI by filtering out deleted user
       setUsers((prev) => prev.filter((user) => user.id !== userId));
       setError(null);
@@ -76,6 +83,7 @@ export default function UsersView() {
     }
   };
 
+
   if (loading) {
     return <div className="loading">Loading users...</div>;
   }
@@ -85,6 +93,25 @@ export default function UsersView() {
   }
   return (
     <div className="relative overflow-x-auto">
+      <div className="flex justify-start items-center space-x-10 max-w-screen-2xl p-4">
+
+        <div className="flex justify-start items-center gap-x-4">
+          <label htmlFor="name">Name</label>
+          <input onChange={handleChange} type="text" name="name" value={selectedUser.name} id="name" />
+        </div>
+        <div className="flex justify-start items-center gap-x-4">
+          <label htmlFor="email">email</label>
+          <input onChange={handleChange} type="text" name="email" value={selectedUser.email} id="email" />
+        </div>
+        <div className="flex justify-start items-center gap-x-4">
+          <label htmlFor="name">Name</label>
+          <select onChange={handleChange} name="role" value={selectedUser.role} id="role">
+            <option value="user">User</option>
+            <option value="admin">admin</option>
+          </select>
+        </div>
+        <button onClick={() => UpdateUserHandler(selectedUser.id)} className="rounded-full px-4 py-1 border cursor-pointer bg-green-200 transition-all delay-75 hover:scale-105">update</button>
+      </div>
       <table className="w-full text-sm text-left rtl:text-right text-gray-500 d:text-gray-400">
         <thead className="text-xs text-gray-700 uppercase bg-gray-50 d:bg-gray-700 d:text-gray-400">
           <tr>
@@ -109,6 +136,7 @@ export default function UsersView() {
           {users?.length > 0 ? (
             users.map((user) => (
               <tr
+                onClick={() => setSelectedUser(user)}
                 key={user.id}
                 className="bg-white border-b d:bg-gray-800 d:border-gray-700 border-gray-200"
               >
