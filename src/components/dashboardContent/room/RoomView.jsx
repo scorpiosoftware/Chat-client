@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import RoomService from '../../../Services/RoomService';
 import UserService from "../../../Services/UserService";
+import { useAuth } from "../../../plugins/AuthContext";
 export default function RoomView() {
     const [rooms, setRooms] = useState([]);
     const [users, setUsers] = useState([]);
+    const [usersRoom, setUsersRoom] = useState([]);
+    const {getUserIdFromToken} = useAuth();
     const [selectedRoom, setSelectedRoom] = useState({ name: "", admin_id: "" });
     const [selectedUsers, setSelectedUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -36,6 +39,26 @@ export default function RoomView() {
     }, []);
 
     useEffect(() => {
+        const fetchUsersRoom = async () => {
+            try {
+                const data = await UserService.getUsersRoomById(selectedRoom.id);
+                const dataArray = adminData.payload.data;
+                setTimeout(() => {
+                    setUsersRoom(dataArray);
+                    setLoading(false);
+                    setError(null);
+                }, 350);
+              console.log(dataArray);
+            } catch (err) {
+                setError(err.message);
+                setUsers([]);
+            }
+        };
+
+        fetchUsersRoom();
+    }, []);
+
+    useEffect(() => {
         const fetchUsers = async () => {
             try {
                 const adminData = await UserService.getUsers();
@@ -63,6 +86,20 @@ export default function RoomView() {
         }));
     };
 
+    async function OnSelectRoom(room) {
+        try {
+            setSelectedRoom(room)
+            const data = await UserService.getUsersByRoomId(selectedRoom.id);
+            const dataArray = data.payload.users;
+            setUsersRoom(dataArray);
+            setLoading(false);
+            setError(null);
+        } catch (err) {
+            setError(err.message);
+            setUsers([]);
+        }
+     }
+
     const UpdateRoomHandler = async (roomId) => {
         if (!window.confirm("Are you sure you want to modify this room?")) return;
         try {
@@ -84,17 +121,37 @@ export default function RoomView() {
         }
     }
 
+    const StoreRoomHandler = async (roomId) => {
+        if (!window.confirm("Are you sure you want to append this room?")) return;
+        try {
+            const formData = {
+                name: selectedRoom.name,
+                admin_id: getUserIdFromToken() ,
+                room_users: selectedUsers
+            }
+            await RoomService.storeRoom(formData);
+            // Update UI
+            setRooms((prevRooms) =>
+                prevRooms.map((room) =>
+                    room.id === roomId ? { ...room, ...formData } : room
+                )
+            );
+            setError(null);
+        } catch (err) {
+            setError(`Update Failed: ${err.message}`);
+        }
+    }
+
     const handleSelectChange = (event) => {
         const selectedValues = Array.from(event.target.selectedOptions, (option) => option.value);
         setSelectedUsers(selectedValues);
     };
-
     // Delete User Button Event
     const handleDeleteRoom = async (roomId) => {
         if (!window.confirm("Are you sure you want to delete this room?")) return;
         try {
             setDeletingId(roomId);
-            await RoomService.deleteRoomById(deletingId);
+            await RoomService.deleteRoomById(roomId);
             // Update UI by filtering out deleted user
             setRooms((prev) => prev.filter((room) => room.id !== roomId));
             setError(null);
@@ -104,8 +161,6 @@ export default function RoomView() {
             setDeletingId(null);
         }
     };
-
-
     if (loading) {
         return <div className="loading">Loading users...</div>;
     }
@@ -137,7 +192,7 @@ export default function RoomView() {
                         ))}
                     </select>
                 </div>
-                <button onClick={() => UpdateRoomHandler(selectedRoom.id)} className="rounded-full px-4 py-1 border cursor-pointer bg-yellow-200 transition-all delay-75 hover:scale-105">Create</button>
+                <button onClick={() => StoreRoomHandler(selectedRoom.id)} className="rounded-full px-4 py-1 border cursor-pointer bg-yellow-200 transition-all delay-75 hover:scale-105">Create</button>
                 <button onClick={() => UpdateRoomHandler(selectedRoom.id)} className="rounded-full px-4 py-1 border cursor-pointer bg-green-200 transition-all delay-75 hover:scale-105">update</button>
          
             </div>
@@ -168,7 +223,7 @@ export default function RoomView() {
                     {rooms?.length > 0 ? (
                         rooms.map((room) => (
                             <tr
-                                onClick={() => setSelectedRoom(room)}
+                                onClick={() => OnSelectRoom(room)}
                                 key={room.id}
                                 className="bg-white border-b d:bg-gray-800 d:border-gray-700 border-gray-200"
                             >

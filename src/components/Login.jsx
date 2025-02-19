@@ -45,8 +45,8 @@ export default function Login() {
       const responseData = await response.json();
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Login failed");
+        // const errorData = await response.json();
+        throw new Error(responseData.message || "Login failed");
       }
 
       // 5. Extract token from the correct response structure

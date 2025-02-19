@@ -73,6 +73,30 @@ export default class UserService {
     }
   }
 
+  static async getUsersByRoomId(id) {
+    try {
+      const token = sessionStorage.getItem('token');
+      const response = await fetch(`http://localhost:3010/api/users/room/${id}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Authentication failed. Please login again.");
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch user:', error);
+      throw error;
+    }
+  }
+
   static async deleteUserById(userId) {
     try {
       const token = sessionStorage.getItem('token');
